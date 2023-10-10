@@ -10,7 +10,7 @@
 
 1. How large the attributes set could be?
 2. Exponential backoff for retries (especially if the server has rate limiting)
-3. Make rarity calculation concurrent using `sync.Map` instead of `Map`
+3. Make rarity calculation concurrent using `sync.Map` instead of `Map` (if we want more speed)
 
 ## External libraries used
 

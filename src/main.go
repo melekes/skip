@@ -136,17 +136,17 @@ func getRarityScorecards(col Collection, getTokenFn getTokenFn) []*RarityScoreca
 
 	// Map of attributes to map of values to count
 	// "hat" -> "red" -> 10
-	attrs := make(map[string]map[string]int)
+	allAttrs := make(map[string]map[string]int)
 	for _, t := range tokens {
 		for k, v := range t.attrs {
-			if attrs[k] == nil {
-				attrs[k] = make(map[string]int)
+			if allAttrs[k] == nil {
+				allAttrs[k] = make(map[string]int)
 			}
 
-			if _, ok := attrs[k][v]; !ok {
-				attrs[k][v] = 1
+			if _, ok := allAttrs[k][v]; !ok {
+				allAttrs[k][v] = 1
 			} else {
-				attrs[k][v]++
+				allAttrs[k][v]++
 			}
 		}
 	}
@@ -155,7 +155,7 @@ func getRarityScorecards(col Collection, getTokenFn getTokenFn) []*RarityScoreca
 	scorecards := make([]*RarityScorecard, len(tokens))
 	for i, t := range tokens {
 		scorecards[i] = &RarityScorecard{
-			rarity: calculateRarity(t.attrs, attrs),
+			rarity: calculateRarity(t.attrs, allAttrs),
 			id:     t.id,
 		}
 	}
