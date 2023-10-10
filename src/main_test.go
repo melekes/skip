@@ -19,19 +19,25 @@ func TestGetRarityScorecards(t *testing.T) {
 				"hat":     "green beret",
 				"earring": "silver",
 			}}, nil
+		case 3:
+			return Token{id: 3, attrs: map[string]string{
+				"hat":     "green beret",
+				"earring": "silver",
+			}}, nil
 		default:
 			panic("unexpected token id")
 		}
 	}
 
 	scorecards := getRarityScorecards(Collection{
-		count: 2,
-		url:   "2_hats",
+		count: 3,
+		url:   "3_hats",
 	}, getTokenStub)
 
-	assert.Len(t, scorecards, 2)
-	assert.Equal(t, scorecards[0].rarity, 0.25)
-	assert.Equal(t, scorecards[1].rarity, 0.25)
+	assert.Len(t, scorecards, 3)
+	assert.Equal(t, scorecards[0].rarity, 0.8333333333333333)
+	assert.Equal(t, scorecards[1].rarity, 0.5833333333333333)
+	assert.Equal(t, scorecards[2].rarity, 0.5833333333333333)
 }
 
 func TestGetRarityScorecardsNoResponse(t *testing.T) {

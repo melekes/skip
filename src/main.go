@@ -97,9 +97,9 @@ func calculateRarity(attrs map[string]string, allAttrs map[string]map[string]int
 
 	r := 0.0
 	for k, v := range attrs {
-		r += float64(allAttrs[k][v] * len(allAttrs[k]))
+		r += 1.0 / float64(allAttrs[k][v]*len(allAttrs[k]))
 	}
-	return 1.0 / r
+	return r
 }
 
 // Returns rarity scorecards for a collection sorted by rarity in descending order
@@ -115,9 +115,9 @@ func getRarityScorecards(col Collection, getTokenFn getTokenFn) []*RarityScoreca
 	}
 
 	logger.Println(string(COLOR_GREEN), fmt.Sprintf("Downloading all the tokens from %q...", col.url), string(COLOR_RESET))
-	for i := 0; i < col.count; i++ {
+	for i := 1; i <= col.count; i++ {
 		inCh <- tokenInfo{
-			id:     i + 1,
+			id:     i,
 			colUrl: col.url,
 		}
 	}
@@ -127,7 +127,7 @@ func getRarityScorecards(col Collection, getTokenFn getTokenFn) []*RarityScoreca
 
 	// Accumulating results
 	tokens := make([]Token, 0, col.count)
-	for i := 0; i < col.count; i++ {
+	for i := 1; i <= col.count; i++ {
 		t := <-outCh
 
 		if !t.isEmpty() { // Filter out empty tokens (failed downloads)
@@ -188,6 +188,6 @@ func main() {
 	}
 	logger.Println(string(COLOR_GREEN), fmt.Sprintf("Top %d tokens (ID: rarity)", max), string(COLOR_RESET))
 	for i := 0; i < max; i++ {
-		logger.Println(fmt.Sprintf("%d: %04f", scorecards[i].id, scorecards[i].rarity))
+		logger.Println(fmt.Sprintf("%d: %.05f", scorecards[i].id, scorecards[i].rarity))
 	}
 }
