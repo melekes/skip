@@ -6,6 +6,12 @@
 2. Maximum 3 attempts are made to fetch a single token (configurable; see `MAX_RETRY`)
 3. Maximum 250 goroutines are run to fetch all tokens (configurable; see `MAX_WORKERS`)
 
+## More things to consider / do
+
+1. How large the attributes set could be?
+2. Exponential backoff for retries (especially if the server has rate limiting)
+3. Make rarity calculation concurrent using `sync.Map` instead of `Map`
+
 ## External libraries used
 
 ### Testing
