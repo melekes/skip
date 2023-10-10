@@ -30,10 +30,6 @@ type Token struct {
 	attrs map[string]string
 }
 
-func (t *Token) isEmpty() bool {
-	return t.id == 0 && len(t.attrs) == 0
-}
-
 type RarityScorecard struct {
 	rarity float64
 	id     int
@@ -49,32 +45,33 @@ type tokenInfo struct {
 	colUrl string
 }
 
-type getTokenFn = func(tid int, colUrl string) (Token, error)
+type getTokenFn = func(tid int, colUrl string) (*Token, error)
 
-func getToken(tid int, colUrl string) (Token, error) {
+// Returns a token or `nil` along with an error
+func getToken(tid int, colUrl string) (*Token, error) {
 	logger.Println(string(COLOR_GREEN), fmt.Sprintf("Getting token %d", tid), string(COLOR_RESET))
 
 	url := fmt.Sprintf("%s/%s/%d.json", URL, colUrl, tid)
 	res, err := http.Get(url)
 	if err != nil {
 		logger.Println(string(COLOR_RED), fmt.Sprintf("Error getting token %d :", tid), err, string(COLOR_RESET))
-		return Token{}, err
+		return nil, err
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		logger.Println(string(COLOR_RED), fmt.Sprintf("Error reading response for token %d :", tid), err, string(COLOR_RESET))
-		return Token{}, err
+		return nil, err
 	}
 	attrs := make(map[string]string)
 	json.Unmarshal(body, &attrs)
-	return Token{
+	return &Token{
 		id:    tid,
 		attrs: attrs,
 	}, nil
 }
 
-func worker(inCh chan tokenInfo, wg *sync.WaitGroup, outCh chan Token, getTokenFn getTokenFn) {
+func worker(inCh chan tokenInfo, wg *sync.WaitGroup, outCh chan *Token, getTokenFn getTokenFn) {
 	defer wg.Done()
 
 	for i := range inCh {
@@ -104,7 +101,7 @@ func calculateRarity(attrs map[string]string, allAttrs map[string]map[string]int
 
 // Returns rarity scorecards for a collection sorted by rarity in descending order
 func getRarityScorecards(col Collection, getTokenFn getTokenFn) []*RarityScorecard {
-	outCh := make(chan Token, col.count)
+	outCh := make(chan *Token, col.count)
 
 	// Create a pool of workers
 	inCh := make(chan tokenInfo)
@@ -126,11 +123,11 @@ func getRarityScorecards(col Collection, getTokenFn getTokenFn) []*RarityScoreca
 	wg.Wait()
 
 	// Accumulating results
-	tokens := make([]Token, 0, col.count)
+	tokens := make([]*Token, 0, col.count)
 	for i := 1; i <= col.count; i++ {
 		t := <-outCh
 
-		if !t.isEmpty() { // Filter out empty tokens (failed downloads)
+		if t != nil { // Filter out failed downloads
 			tokens = append(tokens, t)
 		}
 	}
@@ -157,11 +154,6 @@ func getRarityScorecards(col Collection, getTokenFn getTokenFn) []*RarityScoreca
 	logger.Println(string(COLOR_GREEN), "Calculating rarity scores...", string(COLOR_RESET))
 	scorecards := make([]*RarityScorecard, len(tokens))
 	for i, t := range tokens {
-		// Filter out empty tokens (failed downloads)
-		if t.isEmpty() {
-			continue
-		}
-
 		scorecards[i] = &RarityScorecard{
 			rarity: calculateRarity(t.attrs, attrs),
 			id:     t.id,
